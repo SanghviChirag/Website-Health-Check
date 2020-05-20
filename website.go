@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 // Set DB Connection
@@ -23,35 +24,35 @@ func InitialMigration() {
 	}
 	defer db.Close()
 
-	db.AutoMigrate(&Website{})
+	db.AutoMigrate(&Website{}, &WebsiteHealthStatusHistory{})
 }
 
 // WebsiteHealthStatusHistory to set website-status-history
 type WebsiteHealthStatusHistory struct {
-	websiteCheckDateTime time.Time
-	isSuccess            bool
+	gorm.Model
+	WebsiteID            uint
+	WebsiteCheckDateTime time.Time `json: "websiteCheckDateTime"`
+	IsSuccess            bool      `json: "isSuccess"`
 }
 
 // Website content
 type Website struct {
 	gorm.Model
-	URL                string
-	method             string
-	body               []byte
-	header             []byte
-	expectedStatusCode int
-	checkInterval      int
-	healthStatus       []WebsiteHealthStatusHistory
+	URL                string                       `json: "URL"`
+	Method             string                       `json: "method"`
+	Body               []byte                       `json: "body"`
+	Header             []byte                       `json: "header"`
+	ExpectedStatusCode int                          `json: "expectedStatusCode"`
+	CheckInterval      int                          `json: "checkInterval"`
+	HealthStatus       []WebsiteHealthStatusHistory `json: "healthStatus" gorm:"foreignkey:WebsiteRefer"`
 }
 
 type regWebReqBody struct {
-	links []Website
+	Websites []Website
 }
 
 // Handle Registration of Website
 func registerWebsite(w http.ResponseWriter, r *http.Request) {
-	// Option #1: Keep checking using channels
-	// Option #2: Set crons
 	db, err = gorm.Open("sqlite3", "website.db")
 	if err != nil {
 		panic("Could not connect to database")
@@ -64,11 +65,17 @@ func registerWebsite(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	for _, website := range reqBody.links {
-		db.Create(website)
+
+	for _, website := range reqBody.Websites {
+
+		var web Website
+		if db.Where("URL = ?", website.URL).First(&web).RecordNotFound() {
+			db.Create(&website)
+			_ = setCron(website)
+		}
 	}
 
-	fmt.Fprintf(w, "New User Successfully Created.")
+	fmt.Fprintf(w, "Website(s) Successfully Created.")
 }
 
 // Get all websites data
@@ -82,7 +89,11 @@ func getAllWebsiteInfo(w http.ResponseWriter, r *http.Request) {
 
 	var websites []Website
 	db.Find(&websites)
-	json.NewEncoder(w).Encode(websites)
+
+	w.Header().Add("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	jsonBytes, _ := json.Marshal(websites)
+	w.Write(jsonBytes)
 }
 
 func getWebsite(w http.ResponseWriter, r *http.Request) {
@@ -94,37 +105,15 @@ func getWebsite(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	vars := mux.Vars(r)
-	url := vars["url"]
-	var websites Website
-	db.Where("URL=?", url).Find(&websites)
-	json.NewEncoder(w).Encode(websites)
+	websiteID := vars["id"]
+	var statusHistory []WebsiteHealthStatusHistory
+	db.Where("website_id=?", websiteID).Find(&statusHistory)
+
+	w.Header().Add("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	jsonBytes, _ := json.Marshal(statusHistory)
+	w.Write(jsonBytes)
 }
-
-// func main() {
-// 	links := []Website{
-// 		Website{
-// 			URL:                "http://google.com",
-// 			method:             "GET",
-// 			expectedStatusCode: 200,
-// 			checkInterval:      50,
-// 		},
-// 		Website{
-// 			URL:                "http://amazon.com",
-// 			method:             "GET",
-// 			expectedStatusCode: 200,
-// 			checkInterval:      50,
-// 		},
-// 	}
-
-// 	c := make(chan Website)
-
-// 	for _, website := range links {
-// 		go checkLink(website, c)
-// 	}
-
-// 	fmt.Println(<-c)
-// 	fmt.Println(<-c)
-// }
 
 func checkLink(website Website) {
 
@@ -133,17 +122,19 @@ func checkLink(website Website) {
 		panic("Could not connect to database")
 	}
 	defer db.Close()
-
-	switch website.method {
+	fmt.Println("GETTING CALLED!!!!!")
+	switch website.Method {
 	case "GET":
 		res, _ := http.Get(website.URL)
 
 		healthStatus := WebsiteHealthStatusHistory{
-			websiteCheckDateTime: time.Now().UTC(),
-			isSuccess:            website.expectedStatusCode == res.StatusCode,
+			WebsiteID:            website.ID,
+			WebsiteCheckDateTime: time.Now().UTC(),
+			IsSuccess:            website.ExpectedStatusCode == res.StatusCode,
 		}
-		website.healthStatus = append(website.healthStatus, healthStatus)
-		db.Model(&website).Updates(website)
+
+		db.Create(&healthStatus)
+		fmt.Println(website.HealthStatus)
 		return
 
 	default:

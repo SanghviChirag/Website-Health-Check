@@ -1,11 +1,18 @@
 package main
 
 import (
+	"fmt"
+	"strconv"
+
 	"gopkg.in/robfig/cron.v2"
 )
 
-func setCron(sec int, checkLink func(Website), website Website) {
+func setCron(website Website) int {
 	c := cron.New()
-	// c.AddFunc("*/"+string(sec)+" * * * * *", checkLink(website))
+	interval := strconv.Itoa(website.CheckInterval)
+	c.AddFunc("*/"+interval+" * * * * *", func() { checkLink(website) })
 	c.Start()
+
+	fmt.Println("CRON")
+	return 1
 }

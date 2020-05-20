@@ -27,7 +27,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/", helloWorld).Methods("GET")
 	myRouter.HandleFunc("/register", registerWebsite).Methods("POST")
 	myRouter.HandleFunc("/websites", getAllWebsiteInfo).Methods("GET")
-	myRouter.HandleFunc("/website/{url}", getWebsite).Methods("GET")
+	myRouter.HandleFunc("/website/{id}", getWebsite).Methods("GET")
 	log.Fatal(http.ListenAndServe(":8080", myRouter))
 }
 

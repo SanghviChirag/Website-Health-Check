@@ -1,0 +1,71 @@
+{
+	"info": {
+		"_postman_id": "54d6923f-009c-45d6-af04-63d977090faf",
+		"name": "Golang",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get All Website",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/websites",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"websites"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Register URL",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"websites\": [\n\t{\n\t\t\"method\": \"GET\",\n\t\t\"URL\": \"http://amazon.com\",\n\t\t\"expectedStatusCode\": 200,\n\t\t\"checkInterval\": 30\n\t},\n\t{\n\t\t\"method\": \"GET\",\n\t\t\"URL\": \"http://google.com\",\n\t\t\"expectedStatusCode\": 200,\n\t\t\"checkInterval\": 50\n\t}\n\n]}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/register",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Website Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/website/{{WebID}}",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"website",
+						"{{WebID}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
