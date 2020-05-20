@@ -1,6 +1,6 @@
 # Website Health Checker
 
-Endpoints that are meant to fetch URLs from user and keep checking based on the configuration from backend.
+Endpoints that are meant to fetch URLs from user and keep checking based on the configuration.
 
 # List of APIs!
   - Register websites by providing URL, interval to check status(in secs) and expected status code
