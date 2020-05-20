@@ -41,6 +41,11 @@ For Linux:
 sudo apt install golang-go
 [Set GOPATH/GOROOT if not set bydefault]
 2. Clone Respository: https://github.com/SanghviChirag/Website-Health-Check
+3. Install Following packages:
+go get -u github.com/gorilla/mux
+go get -u github.com/jinzhu/gorm
+go get -u github.com/mattn/go-sqlite3
+go get -u gopkg.in/robfig/cron.v2
 3. Run cmd to initiate server: go run *.go 
 ```
 
